@@ -7,6 +7,7 @@ using UnityEngine.EventSystems;
 public class GameController : MonoBehaviour
 {
     private CubePosition nowCube = new CubePosition(0, 1, 0);
+    private float camMoveToPosition, camMoveSpeed = 2f;
     public float cubeChangePlaceSpeed = 0.5f;
     public Transform cubeToPlace;
 
@@ -30,10 +31,14 @@ public class GameController : MonoBehaviour
         new Vector3(1,0,-1)
     };
 
+    private Transform mainCam;
     private Coroutine showCubePlace;
 
     private void Start()
     {
+        Transform mainCam = Camera.main.transform;
+        camMoveToPosition = 5.9f + nowCube.y - 1f;
+
         allCubesRb = allCubes.GetComponent<Rigidbody>();
         showCubePlace = StartCoroutine(ShowCubePlace());
 
@@ -41,7 +46,7 @@ public class GameController : MonoBehaviour
 
     private void Update()
     {
-        if((Input.GetMouseButtonDown(0) || Input.touchCount > 0) && cubeToPlace != null && !EventSystem.current.IsPointerOverGameObject())
+        if((Input.GetMouseButtonDown(0) || Input.touchCount > 0) && cubeToPlace != null && allCubes != null && !EventSystem.current.IsPointerOverGameObject())
         {
 #if !UNITY_EDITOR
             if (Input.GetTouch(0).phase != TouchPhase.Began)
@@ -68,6 +73,8 @@ public class GameController : MonoBehaviour
             allCubesRb.isKinematic = false;
 
             SpawnPositions();
+            MoveCameraChangeBG();
+
         }
 
         if(!IsLose && allCubesRb.velocity.magnitude > 0.1f)
@@ -76,6 +83,8 @@ public class GameController : MonoBehaviour
             IsLose = true;
             StopCoroutine(showCubePlace);
         }
+
+        mainCam.localPosition = Vector3.MoveTowards(mainCam.localPosition, new Vector3(mainCam.localPosition.x, camMoveToPosition, mainCam.localPosition.z), camMoveSpeed);
     }
 
     IEnumerator ShowCubePlace()
@@ -119,6 +128,27 @@ public class GameController : MonoBehaviour
         }
 
         return true;
+    }
+
+    private void MoveCameraChangeBG()
+    {
+        int maxX = 0, maxY = 0, maxZ = 0;
+
+        foreach(Vector3 pos in allCubePositions)
+        {
+            if (Math.Abs(Convert.ToInt32( pos.x)) > maxX)
+                maxX = Convert.ToInt32(pos.x);
+
+            if (Convert.ToInt32(pos.y) > maxY)
+                maxY = Convert.ToInt32(pos.y);
+
+            if (Math.Abs(Convert.ToInt32(pos.z)) > maxZ)
+                maxZ = Convert.ToInt32(pos.z);
+        }
+
+        
+
+        mainCam.localPosition = new Vector3(mainCam.localPosition.x, camMoveToPosition, mainCam.localPosition.z);
     }
 }
 
